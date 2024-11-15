@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    container_name: postgres_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    volumes:
+      - ./data:/var/lib/postgresql/data
+
+  django_app:
+    build: .
+    container_name: django_app
+    depends_on:
+      - db
+    environment:
+      - PYTHONUNBUFFERED=1
+      - POSTGRES_USER=myuser
+      - POSTGRES_PASSWORD=mypassword
+      - POSTGRES_DB=mydatabase
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "
+        echo 'Очікування запуску бази даних...' &&
+        sleep 10 &&
+        python manage.py migrate &&
+        python manage.py runserver 0.0.0.0:8000
+      "
